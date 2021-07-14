@@ -46,15 +46,15 @@ This tap:
 3. Create the config file
 
     Create a JSON file containing the required fields and/or the optional ones.
-    You can decide between allow-list or deny-list strategy combining organization with repos_include or repos_exclude.
+    You can decide between allow-list or deny-list strategy combining organization with repos_include and repos_exclude using wildcards.
 
 Config                      |Required?  |Description
 :---------------------------|:---------:|:---------------
 access_token                |yes        |The access token to access github api
 start_date                  |yes        |The date inclusive to start extracting the data
 organization                |no         |The organization you want to extract the data from
-repos_include               |no         |Allow list strategy to extract selected repos data from organization   
-repos_exclude               |no         |Deny list to extract all repos from organization except the ones listed 
+repos_include               |no         |Allow list strategy to extract selected repos data from organization. Supports wildcard matching   
+repos_exclude               |no         |Deny list to extract all repos from organization except the ones listed. Supports wildcard matching 
 include_archived            |no         |true/false to include archived repos. Default false  
 include_disabled            |no         |true/false to include disabled repos. Default false 
 repository                  |no         |(DEPRECATED) Allow list strategy to extract selected repos data from organization(has priority over repos_exclude) 
@@ -64,8 +64,8 @@ Example:
 {
   "access_token": "ghp_16C7e42F292c6912E7710c838347Ae178B4a",
   "organization": "singer-io", 
-  "repos_exclude": "tap-github getting-started",
-  "repos_include": "tap-github getting-started",
+  "repos_exclude": "*tests* api-docs",
+  "repos_include": "tap* getting-started pipelinewise-github",
   "start_date": "2021-01-01T00:00:00Z",
   "include_archived": false,
   "include_disabled": false

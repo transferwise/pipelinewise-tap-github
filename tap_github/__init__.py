@@ -1,4 +1,5 @@
 import collections
+import fnmatch
 import json
 import os
 import time
@@ -998,10 +999,21 @@ def get_all_stargazers(schema, repo_path, state, mdata, _start_date):
     return state
 
 
-def get_all_repositories(org: str, exclude=[], include_archived=False, include_disabled=False) -> dict:
+def get_all_repositories(
+    org: str,
+    excludes=None,
+    includes=None,
+    include_archived=False,
+    include_disabled=False
+) -> dict:
     '''
     https://docs.github.com/en/rest/reference/repos
     '''
+
+    if includes is None:
+        includes = []
+    if excludes is None:
+        excludes = []
 
     headers = {'Accept': 'application/vnd.github.v3+json'}
     per_page = 100
@@ -1015,7 +1027,7 @@ def get_all_repositories(org: str, exclude=[], include_archived=False, include_d
             repositories = response.json()
             for repository in repositories:
 
-                if should_skip_repo(repository, exclude, include_archived, include_disabled):
+                if should_skip_repo(repository, includes, excludes, include_archived, include_disabled):
                     continue
 
                 repo = {
@@ -1031,13 +1043,18 @@ def get_all_repositories(org: str, exclude=[], include_archived=False, include_d
     return repos
 
 
-def should_skip_repo(repository, exclude, include_archived: bool, include_disabled: bool):
+def should_skip_repo(
+    repository,
+    includes,
+    excludes,
+    include_archived: bool,
+    include_disabled: bool,
+):
     name = repository.get('name')
     is_archived = repository.get('archived', False)
     is_disabled = repository.get('disabled', False)
-
-    if name in exclude:
-        return True
+    match_excludes = next(filter(lambda exclude: fnmatch.fnmatch(name, exclude), excludes), None)
+    match_includes = next(filter(lambda include: fnmatch.fnmatch(name, include), includes), None)
 
     if is_archived and not include_archived:
         return True
@@ -1045,8 +1062,13 @@ def should_skip_repo(repository, exclude, include_archived: bool, include_disabl
     if is_disabled and not include_disabled:
         return True
 
-    return False
+    if excludes and match_excludes:
+        return True
 
+    if includes and not match_includes:
+        return True
+
+    return False
 
 
 
@@ -1155,21 +1177,32 @@ def do_sync(config, state, catalog):
                 singer.write_state(state)
 
 
-def _validate_repo_config(config):
-    organization = config.get('organization')
-    repository = config.get('repository') #TODO repository is deprecated
-    repos_include = config.get('repos_include')
-    repos_exclude = config.get('repos_exclude')
+def _validate_repo_config(organization, repos_include, repos_exclude):
 
-    if (not repository and not repos_include) and not organization:
-        raise InvalidParametersException("organization is required when repos_include isn't present")
+    if not organization:
+        if [repo for repo in repos_include if '*' in repo]:
+            raise InvalidParametersException("organization is required when repos_include/repository contains wildcard matchers")
 
-    if repos_exclude and not organization:
-        raise InvalidParametersException("repos_exclude requires organization")
+        if [repo for repo in repos_exclude if '*' in repo]:
+            raise InvalidParametersException("organization is required when repos_exclude contains wildcard matchers")
+
+        if not repos_include:
+            raise InvalidParametersException("organization is required when repos_include/repository isn't present")
+
+        if repos_exclude:
+            raise InvalidParametersException("repos_exclude requires organization")
+
+    if organization and [repo for repo in repos_include if '/' in repo]:
+        raise InvalidParametersException("org prefix not allowed in repos_include/repository when organization is present")
+
+    if [repo for repo in repos_exclude if '/' in repo]:
+        raise InvalidParametersException("org prefix not allowed in repos_exclude")
+
+    if '*' in repos_exclude:
+        raise InvalidParametersException("exclude all '*' cannot be used with repos_exclude")
 
 
 def get_repos_from_config(config) -> list:
-    _validate_repo_config(config)
     organization = config.get('organization')
 
     repos_include = [repo for repo in config.get('repos_include', '').split(' ') if repo] \
@@ -1177,12 +1210,14 @@ def get_repos_from_config(config) -> list:
 
     repos_exclude = [repo for repo in config.get('repos_exclude', '').split(' ') if repo]
 
-    if repos_include:
+    _validate_repo_config(organization, repos_include, repos_exclude)
+
+    if not organization and repos_include:
         return [_get_repository_full_name(organization, r) for r in repos_include]
     else:
         include_archived = config.get('include_archived', False)
         include_disabled = config.get('include_disabled', False)
-        repos = get_all_repositories(organization, repos_exclude, include_archived, include_disabled)
+        repos = get_all_repositories(organization, repos_include, repos_exclude, include_archived, include_disabled)
 
         return [r['full_name'] for r in repos]
 
