@@ -58,6 +58,7 @@ repos_exclude               |no         |Deny list to extract all repos from org
 include_archived            |no         |true/false to include archived repos. Default false  
 include_disabled            |no         |true/false to include disabled repos. Default false 
 repository                  |no         |(DEPRECATED) Allow list strategy to extract selected repos data from organization(has priority over repos_exclude) 
+max_rate_limit_wait_seconds |no         |Max time to wait if you hit the github api limit. DEFAULT to 600s
 
 Example:
 ```json
@@ -68,7 +69,8 @@ Example:
   "repos_include": "tap* getting-started pipelinewise-github",
   "start_date": "2021-01-01T00:00:00Z",
   "include_archived": false,
-  "include_disabled": false
+  "include_disabled": false,
+  "max_rate_limit_wait_seconds": 800
 }
 ```
 
