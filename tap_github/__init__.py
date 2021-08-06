@@ -212,7 +212,7 @@ def rate_throttling(response):
         time.sleep(seconds_to_sleep)
 
 # pylint: disable=dangerous-default-value
-def authed_get(source, url, headers={}):
+def authed_get(source, url, headers={}, do_rate_throttling=True):
     with metrics.http_request_timer(source) as timer:
         session.headers.update(headers)
         resp = session.request(method='get', url=url)
@@ -221,7 +221,8 @@ def authed_get(source, url, headers={}):
             return None
         else:
             timer.tags[metrics.Tag.http_status_code] = resp.status_code
-            rate_throttling(resp)
+            if do_rate_throttling:
+                rate_throttling(resp)
             return resp
 
 def authed_get_all_pages(source, url, headers={}):
@@ -325,7 +326,7 @@ def get_catalog():
 
 def verify_repo_access(url_for_repo, repo):
     try:
-        authed_get("verifying repository access", url_for_repo)
+        authed_get("verifying repository access", url_for_repo, do_rate_throttling=False)
     except NotFoundException:
         # throwing user-friendly error message as it checks token access
         message = "HTTP-error-code: 404, Error: Please check the repository name \'{}\' or you do not have sufficient permissions to access this repository.".format(repo)

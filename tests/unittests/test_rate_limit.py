@@ -65,3 +65,27 @@ class TestRateLimit(unittest.TestCase):
         with self.assertRaises(tap_github.RateLimitExceeded):
             self.assertEqual(0, mocked_sleep.call_count)
             tap_github.rate_throttling(resp)
+
+    @mock.patch.object(requests.Session, 'request')
+    @mock.patch('tap_github.__init__.rate_throttling')
+    def test_authed_get(self, mocked_rate_throttling, mocked_request, mocked_sleep):
+        response = requests.Response()
+        response.status_code = 200
+        response._content = 'foo'
+        mocked_request.return_value = response
+
+        # Throttling should be called by default
+        tap_github.authed_get('verifying repository access', 'https://api.github.com/repos/foo/commits')
+        self.assertEqual(1, mocked_rate_throttling.call_count)
+
+        # Throttling should be called if enabled explicitly
+        mocked_rate_throttling.reset_mock()
+        tap_github.authed_get('verifying repository access', 'https://api.github.com/repos/foo/commits',
+                              do_rate_throttling=True)
+        self.assertEqual(1, mocked_rate_throttling.call_count)
+
+        # Throttling should not be called if it's disabled
+        mocked_rate_throttling.reset_mock()
+        tap_github.authed_get('verifying repository access', 'https://api.github.com/repos/foo/commits',
+                              do_rate_throttling=False)
+        self.assertEqual(0, mocked_rate_throttling.call_count)
