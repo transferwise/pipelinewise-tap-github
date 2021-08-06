@@ -15,7 +15,7 @@ class TestRateLimit(unittest.TestCase):
         importlib.reload(tap_github)
 
 
-    def _test_rate_limit_wait_with_default_max_rate_limit(self, mocked_sleep):
+    def test_rate_limit_wait_with_default_max_rate_limit(self, mocked_sleep):
 
         mocked_sleep.side_effect = None
 
@@ -29,7 +29,7 @@ class TestRateLimit(unittest.TestCase):
         self.assertTrue(mocked_sleep.called)
 
 
-    def _test_rate_limit_exception_when_exceed_default_max_rate_limit(self, mocked_sleep):
+    def test_rate_limit_exception_when_exceed_default_max_rate_limit(self, mocked_sleep):
 
         mocked_sleep.side_effect = None
 
@@ -43,7 +43,7 @@ class TestRateLimit(unittest.TestCase):
             self.assertEqual(str(e), "API rate limit exceeded, please try after 601 seconds.")
 
 
-    def _test_rate_limit_not_exceed_default_max_rate_limit(self, mocked_sleep):
+    def test_rate_limit_not_exceed_default_max_rate_limit(self, mocked_sleep):
 
         mocked_sleep.side_effect = None
 
@@ -55,7 +55,7 @@ class TestRateLimit(unittest.TestCase):
 
         self.assertFalse(mocked_sleep.called)
 
-    def _test_rate_limit_config_override_throw_exception(self, mocked_sleep):
+    def test_rate_limit_config_override_throw_exception(self, mocked_sleep):
         tap_github.MAX_RATE_LIMIT_WAIT_SECONDS = 1
 
         resp = api_call()
