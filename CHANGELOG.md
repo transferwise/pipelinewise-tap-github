@@ -1,6 +1,6 @@
 1.0.1 (2021-08-09)
 ------------------
-- Do not rate throtting during discovery
+- Do not do rate throtting during discovery
 
 1.0.0 (2021-07-19)
 ------------------
