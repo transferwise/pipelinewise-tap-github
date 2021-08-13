@@ -76,7 +76,9 @@ Example:
 
 > You can also pass `singer-io/tap-github another-org/tap-octopus` on `repos_include`.
 
-> For retro compatibility you can pass `repository: "singer-io/tap-github singer-io/getting-started"` 
+> For retro compatibility you can pass `repository: "singer-io/tap-github singer-io/getting-started"`
+
+> At the moment this will exclude very small repos with considered size 0 from the github api.  
 
 4. Run the tap in discovery mode to get properties.json file
 
