@@ -168,3 +168,19 @@ class TestListReposByOrg(unittest.TestCase):
         self.assertEqual(len(repositories), 2)
         self.assertEqual('repo1', repositories[0]['name'])
         self.assertEqual('repo2', repositories[1]['name'])
+
+    def test_should_ignore_empty_repos(self, mocked_request):
+        json_response = [
+            {'id': 1, 'name': 'repo1', 'full_name': 'org/repo1', 'size': 100, 'updated_at': '2020-06-12T13:12:55Z'},
+            {'id': 2, 'name': 'repo2', 'full_name': 'org/repo2', 'size': 0, 'updated_at': '2020-06-12T13:12:55Z'},
+            {'id': 3, 'name': 'repo3', 'full_name': 'org/repo3', 'size': 100, 'updated_at': '2020-06-12T13:12:55Z'}
+        ]
+
+        mocked_request.return_value = get_response(200, json_response)
+
+        repositories = tap_github.get_all_repositories("org", [])
+
+        self.assertEqual(mocked_request.call_count, 1)
+        self.assertEqual(len(repositories), 2)
+        self.assertEqual('repo1', repositories[0]['name'])
+        self.assertEqual('repo3', repositories[1]['name'])

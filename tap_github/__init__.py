@@ -1054,10 +1054,14 @@ def should_skip_repo(
     include_disabled: bool,
 ):
     name = repository.get('name')
+    size = repository.get('size')
     is_archived = repository.get('archived', False)
     is_disabled = repository.get('disabled', False)
     match_excludes = next(filter(lambda exclude: fnmatch.fnmatch(name, exclude), excludes), None)
     match_includes = next(filter(lambda include: fnmatch.fnmatch(name, include), includes), None)
+
+    if size <= 0:
+        return True
 
     if is_archived and not include_archived:
         return True
@@ -1220,7 +1224,13 @@ def get_repos_from_config(config) -> list:
     else:
         include_archived = config.get('include_archived', False)
         include_disabled = config.get('include_disabled', False)
-        repos = get_all_repositories(organization, repos_include, repos_exclude, include_archived, include_disabled)
+        repos = get_all_repositories(
+            org=organization,
+            excludes=repos_exclude,
+            includes=repos_include,
+            include_archived=include_archived,
+            include_disabled=include_disabled
+        )
 
         return [r['full_name'] for r in repos]
 
