@@ -1,4 +1,5 @@
 import collections
+import datetime
 import fnmatch
 import json
 import os
@@ -192,6 +193,14 @@ def raise_for_error(resp, source):
     else:
         message = "HTTP-error-code: {}, Error: {}".format(
             error_code, ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("message", "Unknown Error") if response_json == {} else response_json)
+        if error_code == 403:
+            rate_limit_user = resp.headers['X-RateLimit-Limit']
+            remaining_requests_per_hour = resp.headers['X-RateLimit-Remaining']
+            rate_limit_reset = int(resp.headers['X-RateLimit-Reset'])
+            message = f"API rate limit exceeded: " \
+                      f"User limit per hour: {rate_limit_user}, " \
+                      f"Remaining requests: {remaining_requests_per_hour}, " \
+                      f"Time to reset {datetime.datetime.fromtimestamp(rate_limit_reset)}"
 
     exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", GithubException)
     raise exc(message) from None
@@ -201,14 +210,23 @@ def calculate_seconds(epoch):
     return int(round((epoch - current), 0))
 
 def rate_throttling(response):
-    if int(response.headers['X-RateLimit-Remaining']) == 0:
-        seconds_to_sleep = calculate_seconds(int(response.headers['X-RateLimit-Reset']))
+    rate_limit_user = response.headers['X-RateLimit-Limit']
+    remaining_requests_per_hour = int(response.headers['X-RateLimit-Remaining'])
+    rate_limit_reset_timestamp = int(response.headers['X-RateLimit-Reset'])
+    rate_limit_reset_time = datetime.datetime.fromtimestamp(rate_limit_reset_timestamp)
+    if remaining_requests_per_hour <= 0:
+        seconds_to_sleep = calculate_seconds(int(rate_limit_reset_timestamp)) + 60
 
         if seconds_to_sleep > MAX_RATE_LIMIT_WAIT_SECONDS:
-            message = "API rate limit exceeded, please try after {} seconds.".format(seconds_to_sleep)
+            message = f"API rate limit exceeded: " \
+                      f"User limit per hour: {rate_limit_user}, " \
+                      f"Remaining requests: {remaining_requests_per_hour}, " \
+                      f"Time to reset {rate_limit_reset_time.isoformat()}"
             raise RateLimitExceeded(message) from None
 
-        logger.info("API rate limit exceeded. Tap will retry the data collection after %s seconds.", seconds_to_sleep)
+        logger.warn(f"API user limit rate per hour({rate_limit_user}) exceeded.")
+        logger.warn(f"Time to reset rate limit: {rate_limit_reset_time.isoformat()}")
+        logger.warn(f"Tap will retry data collection after {str(datetime.timedelta(seconds=seconds_to_sleep))}")
         time.sleep(seconds_to_sleep)
 
 # pylint: disable=dangerous-default-value
