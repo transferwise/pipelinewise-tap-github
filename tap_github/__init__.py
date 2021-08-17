@@ -1,4 +1,5 @@
 import collections
+import datetime
 import fnmatch
 import json
 import os
@@ -17,6 +18,7 @@ logger = singer.get_logger()
 REQUIRED_CONFIG_KEYS = ['start_date', 'access_token']
 
 MAX_RATE_LIMIT_WAIT_SECONDS = 600
+RATE_THROTTLING_EXTRA_WAITING_TIME = 60
 
 KEY_PROPERTIES = {
     'commits': ['sha'],
@@ -201,14 +203,23 @@ def calculate_seconds(epoch):
     return int(round((epoch - current), 0))
 
 def rate_throttling(response):
-    if int(response.headers['X-RateLimit-Remaining']) == 0:
-        seconds_to_sleep = calculate_seconds(int(response.headers['X-RateLimit-Reset']))
+    rate_limit_user = response.headers.get('X-RateLimit-Limit', 0)
+    remaining_requests_per_hour = int(response.headers.get('X-RateLimit-Remaining', 0))
+    rate_limit_reset_timestamp = int(response.headers.get('X-RateLimit-Reset', 0))
+    rate_limit_reset_time = datetime.datetime.fromtimestamp(rate_limit_reset_timestamp)
+    if remaining_requests_per_hour == 0:
+        seconds_to_sleep = calculate_seconds(int(rate_limit_reset_timestamp)) + RATE_THROTTLING_EXTRA_WAITING_TIME
 
         if seconds_to_sleep > MAX_RATE_LIMIT_WAIT_SECONDS:
-            message = "API rate limit exceeded, please try after {} seconds.".format(seconds_to_sleep)
+            message = f"API rate limit exceeded: " \
+                      f"User limit per hour: {rate_limit_user}, " \
+                      f"Remaining requests: {remaining_requests_per_hour}, " \
+                      f"Time to reset {rate_limit_reset_time.isoformat()}"
             raise RateLimitExceeded(message) from None
 
-        logger.info("API rate limit exceeded. Tap will retry the data collection after %s seconds.", seconds_to_sleep)
+        logger.warning(f"API user limit rate per hour({rate_limit_user}) exceeded.")
+        logger.warning(f"Time to reset rate limit: {rate_limit_reset_time.isoformat()}")
+        logger.warning(f"Tap will retry data collection after {str(datetime.timedelta(seconds=seconds_to_sleep))}")
         time.sleep(seconds_to_sleep)
 
 # pylint: disable=dangerous-default-value
@@ -1054,10 +1065,14 @@ def should_skip_repo(
     include_disabled: bool,
 ):
     name = repository.get('name')
+    size = repository.get('size')
     is_archived = repository.get('archived', False)
     is_disabled = repository.get('disabled', False)
     match_excludes = next(filter(lambda exclude: fnmatch.fnmatch(name, exclude), excludes), None)
     match_includes = next(filter(lambda include: fnmatch.fnmatch(name, include), includes), None)
+
+    if size <= 0:
+        return True
 
     if is_archived and not include_archived:
         return True
@@ -1220,7 +1235,13 @@ def get_repos_from_config(config) -> list:
     else:
         include_archived = config.get('include_archived', False)
         include_disabled = config.get('include_disabled', False)
-        repos = get_all_repositories(organization, repos_include, repos_exclude, include_archived, include_disabled)
+        repos = get_all_repositories(
+            org=organization,
+            excludes=repos_exclude,
+            includes=repos_include,
+            include_archived=include_archived,
+            include_disabled=include_disabled
+        )
 
         return [r['full_name'] for r in repos]
 
