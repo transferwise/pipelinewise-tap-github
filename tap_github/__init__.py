@@ -18,6 +18,7 @@ logger = singer.get_logger()
 REQUIRED_CONFIG_KEYS = ['start_date', 'access_token']
 
 MAX_RATE_LIMIT_WAIT_SECONDS = 600
+RATE_THROTTLING_EXTRA_WAITING_TIME = 60
 
 KEY_PROPERTIES = {
     'commits': ['sha'],
@@ -202,12 +203,12 @@ def calculate_seconds(epoch):
     return int(round((epoch - current), 0))
 
 def rate_throttling(response):
-    rate_limit_user = response.headers['X-RateLimit-Limit']
-    remaining_requests_per_hour = int(response.headers['X-RateLimit-Remaining'])
-    rate_limit_reset_timestamp = int(response.headers['X-RateLimit-Reset'])
+    rate_limit_user = response.headers.get('X-RateLimit-Limit', 0)
+    remaining_requests_per_hour = int(response.headers.get('X-RateLimit-Remaining', 0))
+    rate_limit_reset_timestamp = int(response.headers.get('X-RateLimit-Reset', 0))
     rate_limit_reset_time = datetime.datetime.fromtimestamp(rate_limit_reset_timestamp)
     if remaining_requests_per_hour == 0:
-        seconds_to_sleep = calculate_seconds(int(rate_limit_reset_timestamp)) + 60
+        seconds_to_sleep = calculate_seconds(int(rate_limit_reset_timestamp)) + RATE_THROTTLING_EXTRA_WAITING_TIME
 
         if seconds_to_sleep > MAX_RATE_LIMIT_WAIT_SECONDS:
             message = f"API rate limit exceeded: " \
