@@ -193,14 +193,6 @@ def raise_for_error(resp, source):
     else:
         message = "HTTP-error-code: {}, Error: {}".format(
             error_code, ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("message", "Unknown Error") if response_json == {} else response_json)
-        if error_code == 403:
-            rate_limit_user = resp.headers['X-RateLimit-Limit']
-            remaining_requests_per_hour = resp.headers['X-RateLimit-Remaining']
-            rate_limit_reset = int(resp.headers['X-RateLimit-Reset'])
-            message = f"API rate limit exceeded: " \
-                      f"User limit per hour: {rate_limit_user}, " \
-                      f"Remaining requests: {remaining_requests_per_hour}, " \
-                      f"Time to reset {datetime.datetime.fromtimestamp(rate_limit_reset)}"
 
     exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", GithubException)
     raise exc(message) from None
@@ -214,7 +206,7 @@ def rate_throttling(response):
     remaining_requests_per_hour = int(response.headers['X-RateLimit-Remaining'])
     rate_limit_reset_timestamp = int(response.headers['X-RateLimit-Reset'])
     rate_limit_reset_time = datetime.datetime.fromtimestamp(rate_limit_reset_timestamp)
-    if remaining_requests_per_hour <= 0:
+    if remaining_requests_per_hour == 0:
         seconds_to_sleep = calculate_seconds(int(rate_limit_reset_timestamp)) + 60
 
         if seconds_to_sleep > MAX_RATE_LIMIT_WAIT_SECONDS:
