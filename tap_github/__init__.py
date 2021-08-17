@@ -216,9 +216,9 @@ def rate_throttling(response):
                       f"Time to reset {rate_limit_reset_time.isoformat()}"
             raise RateLimitExceeded(message) from None
 
-        logger.warn(f"API user limit rate per hour({rate_limit_user}) exceeded.")
-        logger.warn(f"Time to reset rate limit: {rate_limit_reset_time.isoformat()}")
-        logger.warn(f"Tap will retry data collection after {str(datetime.timedelta(seconds=seconds_to_sleep))}")
+        logger.warning(f"API user limit rate per hour({rate_limit_user}) exceeded.")
+        logger.warning(f"Time to reset rate limit: {rate_limit_reset_time.isoformat()}")
+        logger.warning(f"Tap will retry data collection after {str(datetime.timedelta(seconds=seconds_to_sleep))}")
         time.sleep(seconds_to_sleep)
 
 # pylint: disable=dangerous-default-value
