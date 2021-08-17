@@ -78,7 +78,7 @@ Example:
 
 > For retro compatibility you can pass `repository: "singer-io/tap-github singer-io/getting-started"`
 
-> At the moment this will exclude very small repos with considered size 0 from the github api.  
+> :warning: **If you have very small repos with total size less than 0.5KB**: These will currently be excluded, as the Github repositories API returns `size: 0` for these, and `tap_github/__init__.py` currently uses `size <= 0` as a way to filter out repos with no commits.
 
 4. Run the tap in discovery mode to get properties.json file
 
