@@ -23,10 +23,8 @@ setup(name='pipelinewise-tap-github',
       ],
       extras_require={
           'test': [
-              'pylint',
-              'pytest',
-              'ipdb',
-              'nose',
+              'pylint==2.10.2',
+              'pytest==6.2.4'
           ]
       },
       entry_points='''
@@ -34,7 +32,7 @@ setup(name='pipelinewise-tap-github',
           tap-github=tap_github:main
       ''',
       packages=['tap_github'],
-      package_data = {
+      package_data={
           'tap_github': ['tap_github/schemas/*.json']
       },
       include_package_data=True
