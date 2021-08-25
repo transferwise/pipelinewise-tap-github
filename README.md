@@ -63,7 +63,7 @@ max_rate_limit_wait_seconds |no         |Max time to wait if you hit the github 
 Example:
 ```json
 {
-  "access_token": "ghp_16C7e42F292c6912E7710c838347Ae178B4a",
+  "access_token": "<GITHUB_ACCESS_TOKEN>",
   "organization": "singer-io", 
   "repos_exclude": "*tests* api-docs",
   "repos_include": "tap* getting-started pipelinewise-github",
