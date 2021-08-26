@@ -349,6 +349,8 @@ def verify_access_for_repo(config):
     session.headers.update({'authorization': 'token ' + access_token, 'per_page': '1', 'page': '1'})
 
     repositories = get_repos_from_config(config)
+    if not config.get('verify_all_repo_access', True) and len(repositories) > 0:
+        repositories = [repositories[0]]
 
     for repo in repositories:
         logger.info("Verifying access of repository: %s", repo)
