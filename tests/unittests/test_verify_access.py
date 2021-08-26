@@ -124,3 +124,26 @@ class TestRepoCallCount(unittest.TestCase):
 
         self.assertEqual(mocked_logger_info.call_count, 3)
         self.assertEqual(mocked_repo.call_count, 3)
+
+    def test_verify_repo_access_call_count(self, mocked_repo, mocked_logger_info):
+        mocked_repo.return_value = None
+
+        # Should verify all repository accesses by default
+        tap_github.verify_access_for_repo({"access_token": "access_token",
+                                           "repository": "org1/repo1 org1/repo2 org2/repo1"})
+        self.assertEqual(mocked_repo.call_count, 3)
+
+        # Should verify only one repository access if verify_all_repo_access is False
+        mocked_repo.reset_mock()
+        tap_github.verify_access_for_repo({"access_token": "access_token",
+                                           "repository": "org1/repo1 org1/repo2 org2/repo1",
+                                           "verify_all_repo_access": False})
+        self.assertEqual(mocked_repo.call_count, 1)
+
+        # Should verify all repository accesses if verify_all_repo_access is True
+        mocked_repo.reset_mock()
+        tap_github.verify_access_for_repo({"access_token": "access_token",
+                                           "repository": "org1/repo1 org1/repo2 org2/repo1",
+                                           "verify_all_repo_access": True})
+        self.assertEqual(mocked_repo.call_count, 3)
+

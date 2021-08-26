@@ -59,6 +59,7 @@ include_archived            |no         |true/false to include archived repos. D
 include_disabled            |no         |true/false to include disabled repos. Default false 
 repository                  |no         |(DEPRECATED) Allow list strategy to extract selected repos data from organization(has priority over repos_exclude) 
 max_rate_limit_wait_seconds |no         |Max time to wait if you hit the github api limit. DEFAULT to 600s
+verify_all_repo_access      |no         |Verify access to all selected repositories. If it's false then it verifies access only to the first selected repository. Default true
 
 Example:
 ```json
@@ -70,7 +71,8 @@ Example:
   "start_date": "2021-01-01T00:00:00Z",
   "include_archived": false,
   "include_disabled": false,
-  "max_rate_limit_wait_seconds": 800
+  "max_rate_limit_wait_seconds": 800,
+  "verify_all_repo_access": true
 }
 ```
 
