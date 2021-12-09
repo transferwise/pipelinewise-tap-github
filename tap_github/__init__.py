@@ -7,7 +7,7 @@ import time
 
 import requests
 import singer
-from singer import metadata, bookmarks, metrics
+from singer import bookmarks, metadata, metrics
 
 session = requests.Session()
 logger = singer.get_logger()
@@ -643,8 +643,6 @@ def get_all_projects(schemas, repo_path, state, mdata, start_date):
 
                 project_id = r.get('id')
 
-
-
                 # sync project_columns if that schema is present (only there if selected)
                 if schemas.get('project_columns'):
                     for project_column_rec in get_all_project_columns(project_id, schemas['project_columns'], repo_path, state, mdata, start_date):
@@ -825,9 +823,7 @@ def get_reviews_for_pr(pr_number, schema, repo_path, state, mdata):
             with singer.Transformer() as transformer:
                 rec = transformer.transform(review, schema, metadata=metadata.to_map(mdata))
             yield rec
-
-
-        return state
+    return state
 
 def get_review_comments_for_pr(pr_number, schema, repo_path, state, mdata):
     for response in authed_get_all_pages(
@@ -840,9 +836,7 @@ def get_review_comments_for_pr(pr_number, schema, repo_path, state, mdata):
             with singer.Transformer() as transformer:
                 rec = transformer.transform(comment, schema, metadata=metadata.to_map(mdata))
             yield rec
-
-
-        return state
+    return state
 
 def get_commits_for_pr(pr_number, pr_id, schema, repo_path, state, mdata):
     for response in authed_get_all_pages(
@@ -860,7 +854,7 @@ def get_commits_for_pr(pr_number, pr_id, schema, repo_path, state, mdata):
                 rec = transformer.transform(commit, schema, metadata=metadata.to_map(mdata))
             yield rec
 
-        return state
+    return state
 
 
 def get_all_assignees(schema, repo_path, state, mdata, _start_date):
