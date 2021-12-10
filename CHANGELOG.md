@@ -1,3 +1,8 @@
+1.0.3 (2021-12-10)
+------------------
+- Fixed pagination issue while fetching comments.
+- Lock versions required by test packages.
+
 1.0.2 (2021-08-17)
 ------------------
 - Skipping repos with size 0 on list all repos
