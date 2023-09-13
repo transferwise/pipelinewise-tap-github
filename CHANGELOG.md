@@ -1,3 +1,8 @@
+1.1.0 (2023-09-13)
+------------------
+- Update GHA
+- add additional field merge_commit_hash
+
 1.0.3 (2021-12-10)
 ------------------
 - Fixed pagination issue while fetching comments.
