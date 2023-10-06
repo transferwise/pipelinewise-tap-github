@@ -93,7 +93,7 @@
       }
     },
     "merge_commit_sha": {
-      "type": ["null", "string"],
+      "type": ["null", "string"]
     },
     "merged_at": {
       "type": ["null", "string"],
