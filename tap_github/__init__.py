@@ -349,8 +349,16 @@ def verify_access_for_repo(config):
     session.headers.update({'authorization': 'token ' + access_token, 'per_page': '1', 'page': '1'})
 
     repositories = get_repos_from_config(config)
+    verify_all = config.get('verify_all_repo_access', True)
 
-    for repo in repositories:
+    if verify_all and len(repositories) > 0:
+        repos_to_verify = repositories
+    elif len(repositories) > 0:
+        repos_to_verify = [repositories[0]]
+    else:
+        repos_to_verify = []
+
+    for repo in repos_to_verify:
         logger.info("Verifying access of repository: %s", repo)
 
         url_for_repo = "https://api.github.com/repos/{}/commits".format(repo)
