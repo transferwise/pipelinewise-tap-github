@@ -1,3 +1,10 @@
+# Notice
+To better serve Wise business and customer needs, the PipelineWise codebase needs to shrink.
+We have made the difficult decision that, going forward many components of PipelineWise will be removed or incorporated in the main repo.
+The last version before this decision is [v0.64.1](https://github.com/transferwise/pipelinewise/tree/v0.64.1)
+
+We thank all in the open-source community, that over the past 6 years, have helped to make PipelineWise a robust product for heterogeneous replication of many many Terabytes, daily
+
 # pipelinewise-tap-github
 
 [![PyPI version](https://badge.fury.io/py/pipelinewise-tap-github.svg)](https://badge.fury.io/py/pipelinewise-tap-github)
@@ -53,18 +60,18 @@ Config                      |Required?  |Description
 access_token                |yes        |The access token to access github api
 start_date                  |yes        |The date inclusive to start extracting the data
 organization                |no         |The organization you want to extract the data from
-repos_include               |no         |Allow list strategy to extract selected repos data from organization. Supports wildcard matching   
-repos_exclude               |no         |Deny list to extract all repos from organization except the ones listed. Supports wildcard matching 
-include_archived            |no         |true/false to include archived repos. Default false  
-include_disabled            |no         |true/false to include disabled repos. Default false 
-repository                  |no         |(DEPRECATED) Allow list strategy to extract selected repos data from organization(has priority over repos_exclude) 
+repos_include               |no         |Allow list strategy to extract selected repos data from organization. Supports wildcard matching
+repos_exclude               |no         |Deny list to extract all repos from organization except the ones listed. Supports wildcard matching
+include_archived            |no         |true/false to include archived repos. Default false
+include_disabled            |no         |true/false to include disabled repos. Default false
+repository                  |no         |(DEPRECATED) Allow list strategy to extract selected repos data from organization(has priority over repos_exclude)
 max_rate_limit_wait_seconds |no         |Max time to wait if you hit the github api limit. DEFAULT to 600s
 
 Example:
 ```json
 {
   "access_token": "ghp_16C7e42F292c6912E7710c838347Ae178B4a",
-  "organization": "singer-io", 
+  "organization": "singer-io",
   "repos_exclude": "*tests* api-docs",
   "repos_include": "tap* getting-started pipelinewise-github",
   "start_date": "2021-01-01T00:00:00Z",
